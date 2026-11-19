@@ -296,9 +296,15 @@ em { font-family: var(--f-italic); font-style: italic; font-weight: 400; }
 .intro__circle { position: relative; width: min(100%, 520px); aspect-ratio: 1; justify-self: center; }
 .porthole-frame { position: absolute; inset: 11%; border-radius: 50%; overflow: hidden; }
 .porthole-frame img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
-.ring-text { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.ring-text text, .porthole__ring text { transform-box: view-box; transform-origin: 50% 50%; animation: spin 40s linear infinite; }
-.porthole__ring text { animation-duration: 28s; }
+/* rotate the whole <svg> (an HTML-level box), never the <text> inside —
+   SVG transform-origin on text is unreliable on mobile browsers */
+.ring-text, .porthole__ring-svg {
+  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+  transform-origin: 50% 50%;
+  animation: spin 40s linear infinite;
+  will-change: transform;
+}
+.porthole__ring-svg { animation-duration: 28s; }
 .cursor.is-hidden .cursor__ring, .cursor.is-hidden .cursor__dot { opacity: 0; }
 .cursor__dot { transition: opacity .3s; }
 .gallery__track { user-select: none; -webkit-user-select: none; }
@@ -380,9 +386,10 @@ em { font-family: var(--f-italic); font-style: italic; font-weight: 400; }
 .porthole { position: relative; height: 100vh; height: 100svh; background: var(--ink); }
 .porthole__stage { position: relative; height: 100%; overflow: hidden; }
 .porthole__media { position: absolute; inset: 0; clip-path: circle(14vmin at 50% 50%); will-change: clip-path; }
+@media (max-width: 900px) { .porthole__media { clip-path: circle(19vmin at 50% 50%); } }
 .porthole__media img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; transform-origin: 20% 100%; }
 .porthole__shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(13, 21, 18, .7), rgba(13, 21, 18, .05) 55%); opacity: 0; }
-.porthole__ring { position: absolute; left: 50%; top: 50%; width: 46vmin; height: 46vmin; margin: -23vmin 0 0 -23vmin; overflow: visible; }
+.porthole__ring { position: absolute; left: 50%; top: 50%; width: 46vmin; height: 46vmin; margin: -23vmin 0 0 -23vmin; }
 .porthole__ring text { font-size: 8.5px; letter-spacing: .4em; text-transform: uppercase; fill: var(--brass); font-weight: 500; }
 .porthole__copy { position: absolute; left: var(--gutter); right: var(--gutter); bottom: clamp(40px, 10vh, 110px); opacity: 0; }
 .porthole__title { margin-top: 14px; font-family: var(--f-display); font-weight: 400; font-size: clamp(3rem, 8.4vw, 10rem); line-height: .9; letter-spacing: -.03em; }
@@ -611,6 +618,7 @@ em { font-family: var(--f-italic); font-style: italic; font-weight: 400; }
   .pillar__line { display: none; }
 
   .specs__sticky { position: relative; top: 0; max-width: 460px; margin: 0 auto; }
+  .porthole__ring { width: 60vmin; height: 60vmin; margin: -30vmin 0 0 -30vmin; }
 
   .gallery__pin { height: auto; padding: 100px 0 80px; }
   .gallery__track { width: auto; overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 6px; scrollbar-width: none; }

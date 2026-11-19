@@ -136,6 +136,32 @@
   tick();
   setInterval(tick, 20000);
 
+  /* ---------------- ring text: guarantee a seamless circle ----------------
+     textLength (set in HTML) does the job in modern browsers; if a browser
+     ignores it, fall back to distributing the gap through letter-spacing. */
+  function fitRings() {
+    $$('textPath').forEach((tp) => {
+      const text = tp.closest('text');
+      const path = $(tp.getAttribute('href'));
+      if (!text || !path || !text.getNumberOfChars) return;
+      const C = path.getTotalLength();
+      const r = C / (2 * Math.PI);
+      const n = text.getNumberOfChars();
+      let end;
+      try { end = text.getEndPositionOfChar(n - 1); } catch (e) { return; }
+      const vb = text.ownerSVGElement.viewBox.baseVal;
+      const cx = vb.x + vb.width / 2, cy = vb.y + vb.height / 2;
+      let d = Math.atan2(end.y - cy, end.x - cx) - Math.PI;
+      d = (((d % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) * r;
+      const off = Math.min(d, C - d);
+      if (off < 3) return; // already seamless
+      const natural = text.getComputedTextLength();
+      const ls = parseFloat(getComputedStyle(text).letterSpacing) || 0;
+      text.style.letterSpacing = ls + (C - natural) / n + 'px';
+    });
+  }
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(fitRings);
+
   /* ---------------- cursor ---------------- */
   if (fine) {
     document.documentElement.classList.add('has-cursor');
@@ -203,9 +229,9 @@
 
   // 2 · PORTHOLE — the round window becomes the pool
   const ptl = gsap.timeline({
-    scrollTrigger: { trigger: '.porthole', start: 'top top', end: '+=160%', pin: true, scrub: 1 },
+    scrollTrigger: { trigger: '.porthole', start: 'top top', end: '+=160%', pin: true, scrub: 1, invalidateOnRefresh: true },
   });
-  ptl.fromTo('.porthole__media', { clipPath: 'circle(14vmin at 50% 50%)' }, { clipPath: 'circle(120vmax at 50% 50%)', ease: 'power2.in', duration: 1 }, 0)
+  ptl.fromTo('.porthole__media', { clipPath: () => `circle(${window.innerWidth <= 900 ? 19 : 14}vmin at 50% 50%)` }, { clipPath: 'circle(120vmax at 50% 50%)', ease: 'power2.in', duration: 1 }, 0)
     .fromTo('.porthole__media img', { scale: 1.6 }, { scale: 1, ease: 'none', duration: 1 }, 0)
     .to('.porthole__ring', { scale: 2.6, opacity: 0, ease: 'power2.in', duration: 0.55 }, 0)
     .to('.porthole__shade', { opacity: 1, duration: 0.3 }, 0.7)
