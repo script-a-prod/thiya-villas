@@ -642,6 +642,10 @@ em { font-family: var(--f-italic); font-style: italic; font-weight: 400; }
   .lightbox { grid-template-columns: 44px 1fr 44px; }
 }
 
+@media (max-width: 900px) and (max-height: 720px) {
+  .hero__meta--l { display: none; }
+}
+
 @media (max-width: 560px) {
   .nav__cta { display: none; }
   .nav__word { font-size: 18px; }
