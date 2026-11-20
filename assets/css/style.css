@@ -298,19 +298,35 @@ em { font-family: var(--f-italic); font-style: italic; font-weight: 400; }
 .porthole-frame img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.15); }
 /* rotate the whole <svg> (an HTML-level box), never the <text> inside —
    SVG transform-origin on text is unreliable on mobile browsers */
-.ring-text, .porthole__ring-svg {
-  position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible;
+/* Circular text: every glyph is its own element placed by JS at an exact
+   angle (see buildRings in main.js) — identical in every browser. */
+.ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
   transform-origin: 50% 50%;
   animation: spin 40s linear infinite;
   will-change: transform;
+  pointer-events: none;
 }
-.porthole__ring-svg { animation-duration: 28s; }
+.ring--fast { animation-duration: 28s; }
+.ring__c {
+  position: absolute; left: 50%; bottom: 50%;
+  width: 0;
+  transform-origin: 0 100%;
+}
+.ring__g {
+  position: absolute; top: 0; left: 0;
+  transform: translateX(-50%);
+  font-family: var(--f-sans); font-weight: 500; text-transform: uppercase;
+  line-height: 1; white-space: pre;
+}
+.ring--ink { color: var(--ink); }
+.ring--bone { color: var(--bone); }
+.ring--brass { color: var(--brass); }
 .cursor.is-hidden .cursor__ring, .cursor.is-hidden .cursor__dot { opacity: 0; }
 .cursor__dot { transition: opacity .3s; }
 .gallery__track { user-select: none; -webkit-user-select: none; }
 .gallery__track img { -webkit-user-drag: none; }
-.ring-text text { font-family: var(--f-sans); font-size: 9.6px; letter-spacing: .32em; text-transform: uppercase; fill: var(--ink); font-weight: 500; }
-.ring-text--light text { fill: var(--bone); }
 @keyframes spin { to { transform: rotate(360deg); } }
 .intro__copy { max-width: 560px; }
 .intro__copy p + p { margin-top: 18px; opacity: .8; }
@@ -390,7 +406,6 @@ em { font-family: var(--f-italic); font-style: italic; font-weight: 400; }
 .porthole__media img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 100%; transform-origin: 20% 100%; }
 .porthole__shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(13, 21, 18, .7), rgba(13, 21, 18, .05) 55%); opacity: 0; }
 .porthole__ring { position: absolute; left: 50%; top: 50%; width: 46vmin; height: 46vmin; margin: -23vmin 0 0 -23vmin; }
-.porthole__ring text { font-size: 8.5px; letter-spacing: .4em; text-transform: uppercase; fill: var(--brass); font-weight: 500; }
 .porthole__copy { position: absolute; left: var(--gutter); right: var(--gutter); bottom: clamp(40px, 10vh, 110px); opacity: 0; }
 .porthole__title { margin-top: 14px; font-family: var(--f-display); font-weight: 400; font-size: clamp(3rem, 8.4vw, 10rem); line-height: .9; letter-spacing: -.03em; }
 .porthole__title em { color: var(--brass); }

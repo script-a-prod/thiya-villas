@@ -136,31 +136,70 @@
   tick();
   setInterval(tick, 20000);
 
-  /* ---------------- ring text: guarantee a seamless circle ----------------
-     textLength (set in HTML) does the job in modern browsers; if a browser
-     ignores it, fall back to distributing the gap through letter-spacing. */
-  function fitRings() {
-    $$('textPath').forEach((tp) => {
-      const text = tp.closest('text');
-      const path = $(tp.getAttribute('href'));
-      if (!text || !path || !text.getNumberOfChars) return;
-      const C = path.getTotalLength();
-      const r = C / (2 * Math.PI);
-      const n = text.getNumberOfChars();
-      let end;
-      try { end = text.getEndPositionOfChar(n - 1); } catch (e) { return; }
-      const vb = text.ownerSVGElement.viewBox.baseVal;
-      const cx = vb.x + vb.width / 2, cy = vb.y + vb.height / 2;
-      let d = Math.atan2(end.y - cy, end.x - cx) - Math.PI;
-      d = (((d % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)) * r;
-      const off = Math.min(d, C - d);
-      if (off < 3) return; // already seamless
-      const natural = text.getComputedTextLength();
-      const ls = parseFloat(getComputedStyle(text).letterSpacing) || 0;
-      text.style.letterSpacing = ls + (C - natural) / n + 'px';
+  /* ---------------- circular text ----------------
+     Every glyph is its own element, rotated around the ring centre by an
+     angle computed from its real measured width. The gaps are distributed so
+     the text always closes the circle exactly. No SVG textPath, so it renders
+     the same in Safari, Chrome and Firefox. */
+  const measureCtx = document.createElement('canvas').getContext('2d');
+
+  function buildRing(ring) {
+    const S = ring.clientWidth;
+    if (!S) return;
+    const chars = [...((ring.dataset.text || '').toUpperCase() + ' ')];
+    const rB = S * parseFloat(ring.dataset.r); // baseline radius
+    let fs = S * parseFloat(ring.dataset.fs); // font size
+    const C = 2 * Math.PI * rB;
+
+    const measure = (size) => {
+      measureCtx.font = `500 ${size}px "Hanken Grotesk", system-ui, sans-serif`;
+      return chars.map((ch) => measureCtx.measureText(ch).width);
+    };
+    let widths = measure(fs);
+    let total = widths.reduce((a, b) => a + b, 0);
+    if (total > C * 0.82) { // too long for this ring: shrink to fit
+      fs *= (C * 0.82) / total;
+      widths = measure(fs);
+      total = widths.reduce((a, b) => a + b, 0);
+    }
+    const gap = (C - total) / chars.length;
+
+    // where the baseline sits inside a line-height:1 box
+    const m = measureCtx.measureText('H');
+    const A = m.fontBoundingBoxAscent || fs * 0.92;
+    const D = m.fontBoundingBoxDescent || fs * 0.24;
+    const baseline = (fs - (A + D)) / 2 + A;
+
+    const frag = document.createDocumentFragment();
+    let s = 0;
+    chars.forEach((ch, i) => {
+      const w = widths[i];
+      if (ch.trim()) {
+        const c = document.createElement('span');
+        c.className = 'ring__c';
+        c.style.height = rB + baseline + 'px';
+        c.style.transform = `rotate(${(s + w / 2) / rB}rad)`;
+        const g = document.createElement('span');
+        g.className = 'ring__g';
+        g.style.fontSize = fs + 'px';
+        g.textContent = ch;
+        c.appendChild(g);
+        frag.appendChild(c);
+      }
+      s += w + gap;
     });
+    ring.replaceChildren(frag);
   }
-  (document.fonts ? document.fonts.ready : Promise.resolve()).then(fitRings);
+
+  const rings = $$('.ring');
+  const buildAll = () => rings.forEach(buildRing);
+  buildAll();
+  (document.fonts ? document.fonts.ready : Promise.resolve()).then(buildAll);
+  if (window.ResizeObserver) {
+    let raf = 0;
+    const ro = new ResizeObserver(() => { cancelAnimationFrame(raf); raf = requestAnimationFrame(buildAll); });
+    rings.forEach((r) => ro.observe(r));
+  }
 
   /* ---------------- cursor ---------------- */
   if (fine) {
